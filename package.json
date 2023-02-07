@@ -5,9 +5,14 @@
   "author": "Virginija Jan <vjanuskaite@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@react-three/drei": "^9.56.18",
+    "@react-three/fiber": "^8.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "three": "^0.149.0",
+    "three-stdlib": "^2.21.8",
+    "zustand": "^4.3.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -18,6 +23,7 @@
   "devDependencies": {
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
+    "@types/three": "^0.149.0",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "@typescript-eslint/parser": "^5.50.0",
     "eslint": "^8.33.0",
