@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 
 import { useAnimations, useGLTF, OrbitControls } from "@react-three/drei"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Group, MeshStandardMaterial } from "three"
+import { Group, Mesh, MeshStandardMaterial } from "three"
 import { GLTF, OrbitControls as OrbitControlsType } from "three-stdlib"
 import { shallow } from "zustand/shallow"
 
@@ -19,6 +19,7 @@ let previousTime = 0
 export const Character = () => {
   const { camera } = useThree()
   const characterRef = useRef<Group>(null)
+  const testObjRef = useRef<Mesh>(null)
   const controlsRef = useRef<OrbitControlsType>(null)
   const controls = useStore((state) => state.controls, shallow)
   const { nodes, materials, animations } = useGLTF(
@@ -33,7 +34,7 @@ export const Character = () => {
   )
 
   useEffect(() => {
-    updateCharacterControls(0, 0)
+    updateCharacterControls(0)
     actions.pose_chapeau?.play()
     if (characterRef.current) {
       if (controlsRef.current?.enabled) {
@@ -58,7 +59,7 @@ export const Character = () => {
     if (!characterRef.current) return
     const elapsedTime = clock.getElapsedTime()
     const delta = elapsedTime - previousTime
-    updateCharacterControls(delta, elapsedTime)
+    updateCharacterControls(delta)
     previousTime = elapsedTime
   })
 
@@ -68,7 +69,7 @@ export const Character = () => {
         ref={characterRef}
         name="character"
         dispose={null}
-        position={[1.5, 0, 7]}
+        position={[1.5, -0.04, 7]}
         rotation={[0, Math.PI, 0]}
         scale={[1.5, 1.5, 1.5]}
       >
@@ -84,9 +85,18 @@ export const Character = () => {
         </group>
       </group>
 
+      <mesh
+        ref={testObjRef}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[1.5, 0.5, 12]}
+      >
+        <ringGeometry args={[4.8, 5, 32]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+
       <OrbitControls
         ref={controlsRef}
-        enabled={true}
+        enabled={false}
         enablePan={false}
         enableZoom={false}
         maxPolarAngle={Math.PI / 2}

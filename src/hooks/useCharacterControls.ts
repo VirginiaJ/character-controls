@@ -30,9 +30,10 @@ const lookTarget = new Vector3()
 const sideDir = new Vector3()
 const frontOffset = new Vector3()
 const sideOffset = new Vector3()
+const characterOffset = new Vector3()
+const trackPos = new Vector3()
 const characterBox = new Box3()
 const dummyObject = new Object3D()
-const orbitObject = new Object3D()
 const movementSpeed = 1
 
 export const useCharacterControls = (
@@ -46,6 +47,14 @@ export const useCharacterControls = (
   const moveRight = useRef(false)
   const setControls = useStore((state) => state.setControls)
   const dist = useRef(0)
+
+  const camGroup = useMemo(() => new Group(), [])
+
+  const trackObject = useMemo(() => {
+    const object = new Object3D()
+    camGroup.add(object)
+    return object
+  }, [camGroup])
 
   const objectsToTestForCollisions = useMemo(
     () =>
@@ -137,23 +146,25 @@ export const useCharacterControls = (
   )
 
   useEffect(() => {
-    camera.add(orbitObject)
-    cameraQuaternion.copy(cameraQuaternion)
-    camera.rotation.set(0, 0, 0)
-    orbitObject.position.set(0, 0, 0)
+    camGroup.position.copy(camera.position)
+    trackObject.position.set(0, 0, 0)
     if (characterRef.current) {
-      const characterOffset = camera.position
-        .clone()
+      characterOffset
+        .copy(camera.position)
         .sub(characterRef.current.position)
         .projectOnPlane(axisY)
-      orbitObject.position.copy(characterOffset.negate())
+
+      trackObject.position.copy(characterOffset.clone().negate())
+      trackObject.translateY(-camera.position.y)
+
+      characterRef.current.position.copy(trackObject.getWorldPosition(trackPos))
+
       dist.current = camera.position
         .clone()
         .sub(characterRef.current.position)
         .projectOnPlane(axisY)
         .length()
     }
-    camera.setRotationFromQuaternion(cameraQuaternion)
 
     document.addEventListener("keydown", onKeyDown)
     document.addEventListener("keyup", onKeyUp)
@@ -161,23 +172,24 @@ export const useCharacterControls = (
       document.removeEventListener("keydown", onKeyDown)
       document.removeEventListener("keyup", onKeyUp)
     }
-  }, [onKeyDown, onKeyUp, characterRef, camera])
+  }, [onKeyDown, onKeyUp, characterRef, camera, trackObject, camGroup])
 
   const updateCharacterControls = useCallback(
-    (delta: number, elapsedTime: number) => {
+    (delta: number) => {
       if (!characterRef.current || !camera) return
       const speed = delta * movementSpeed
 
       camera.getWorldDirection(cameraDir)
       cameraQuaternion.copy(camera.quaternion)
       cameraDir.projectOnPlane(axisY)
+      camGroup.position.copy(camera.position)
 
       characterBox.setFromObject(characterRef.current)
       dummyObject.position.copy(characterRef.current.position)
 
       lookTarget.copy(characterRef.current.position)
 
-      camera.rotation.set(0, 0, 0)
+      if (controlsRef.current?.enabled) camera.rotation.set(0, 0, 0)
       characterRef.current.rotation.set(0, 0, 0)
 
       if (moveForward.current) {
@@ -212,31 +224,24 @@ export const useCharacterControls = (
           characterRef.current.translateOnAxis(sideDir, speed)
           camera.translateOnAxis(sideDir, speed)
         } else {
-          //   console.log(orbitObject.getWorldPosition(new Vector3()))
-          // orbitObject.position.x =
-          //   dist.current *
-          //   Math.sin(Math.PI - camera.rotation.z + elapsedTime * 0.05)
-          // orbitObject.position.z =
-          //   dist.current *
-          //   Math.cos(Math.PI - camera.rotation.z + elapsedTime * 0.05)
-          //   console.log(orbitObject.getWorldPosition(new Vector3()))
-          // characterRef.current.position.x = orbitObject.getWorldPosition(
-          //   new Vector3()
-          // ).x
-          // characterRef.current.position.z = orbitObject.getWorldPosition(
-          //   new Vector3()
-          // ).z
-          //   console.log(characterRef.current.position)
+          camGroup.rotateY(0.01)
+          characterRef.current.position.copy(
+            trackObject.getWorldPosition(trackPos)
+          )
         }
         lookTarget.add(sideDir)
       }
       if (moveRight.current) {
         sideDir.copy(cameraDir).applyEuler(rotationToSide)
-        // characterRotation.set(0, Math.PI / 2, 0)
-        // characterRef.current.translateX(speed)
-
-        characterRef.current.translateOnAxis(sideDir, -speed)
-        camera.translateOnAxis(sideDir, -speed)
+        if (controlsRef.current?.enabled) {
+          characterRef.current.translateOnAxis(sideDir, -speed)
+          camera.translateOnAxis(sideDir, -speed)
+        } else {
+          camGroup.rotateY(-0.01)
+          characterRef.current.position.copy(
+            trackObject.getWorldPosition(trackPos)
+          )
+        }
         lookTarget.sub(sideDir)
       }
 
@@ -247,12 +252,8 @@ export const useCharacterControls = (
         camera.lookAt(characterRef.current.position)
       }
       characterRef.current.lookAt(lookTarget)
-
-      // cameraDir.multiplyScalar(cameraDist)
-      // cameraPos.copy(characterRef.current.position).sub(cameraDir)
-      // camera.position.copy(cameraPos)
     },
-    [characterRef, camera, controlsRef]
+    [characterRef, camera, controlsRef, camGroup, trackObject]
   )
 
   return { updateCharacterControls }

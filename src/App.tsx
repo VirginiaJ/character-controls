@@ -16,7 +16,7 @@ function App() {
         shadows
         dpr={[1, 1.5]}
         camera={{
-          position: [3, 2, 12],
+          position: [1.5, 2, 12],
           rotation: [-0.3, 0, 0],
           fov: 45,
         }}
