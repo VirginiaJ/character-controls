@@ -154,7 +154,9 @@ export const useCharacterControls = (
         .projectOnPlane(axisY)
 
       trackObject.position.copy(characterOffset.clone().negate())
-      trackObject.translateY(-camera.position.y)
+      trackObject.translateY(
+        -camera.position.y + characterRef.current.position.y
+      )
 
       characterRef.current.position.copy(trackObject.getWorldPosition(trackPos))
 

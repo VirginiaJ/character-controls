@@ -21,6 +21,9 @@ export const Character = () => {
   const characterRef = useRef<Group>(null)
   const controlsRef = useRef<OrbitControlsType>(null)
   const controls = useStore((state) => state.controls, shallow)
+  const isOrbitControlsEnabled = useStore(
+    (state) => state.isOrbitControlsEnabled
+  )
   const { nodes, materials, animations } = useGLTF(
     "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/korrigan-hat/model.gltf"
   ) as GLTFResult
@@ -86,10 +89,10 @@ export const Character = () => {
 
       <OrbitControls
         ref={controlsRef}
-        enabled={false}
+        enabled={isOrbitControlsEnabled}
         enablePan={false}
         enableZoom={false}
-        maxPolarAngle={Math.PI / 2}
+        maxPolarAngle={Math.PI / 2 - 0.05}
         dampingFactor={0.2}
       />
     </>

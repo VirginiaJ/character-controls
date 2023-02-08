@@ -7,6 +7,7 @@ import { Character } from "./components/Character"
 import { Forest } from "./components/Forest"
 import { Ground } from "./components/Ground"
 import { Ruins } from "./components/Ruins"
+import { Checkbox } from "./components/UI/Checkbox"
 import { Wizard } from "./components/Wizard"
 
 function App() {
@@ -40,6 +41,9 @@ function App() {
           shadow-bias={-0.0001}
         />
       </Canvas>
+      <div className="UI_elements_conteiner">
+        <Checkbox />
+      </div>
     </div>
   )
 }
