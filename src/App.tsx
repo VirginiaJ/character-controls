@@ -41,7 +41,7 @@ function App() {
           shadow-bias={-0.0001}
         />
       </Canvas>
-      <div className="UI_elements_conteiner">
+      <div className="UI_elements_container">
         <Checkbox />
       </div>
     </div>

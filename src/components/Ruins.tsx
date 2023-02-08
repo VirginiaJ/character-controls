@@ -17,7 +17,7 @@ export const Ruins = () => {
   )
 
   return (
-    <group position={[-10, -0, -9]} scale={[0.3, 0.3, 0.3]} dispose={null}>
+    <group position={[-10, 0.3, -9]} scale={[0.3, 0.3, 0.3]} dispose={null}>
       <mesh
         geometry={nodes.dolmen1001.geometry}
         material={stounMaterial}

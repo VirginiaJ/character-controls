@@ -11,13 +11,13 @@ export const Checkbox = () => {
   return (
     <div className="checkbox">
       <input
-        id="checkbox"
+        id="checkbox-input"
         type="checkbox"
         role="switch"
         checked={isOrbitControlsEnabled}
         onChange={() => setIsOrbitControlsEnabled(!isOrbitControlsEnabled)}
       />
-      <label className="checkbox_label" htmlFor="checkbox">
+      <label className="checkbox-label" htmlFor="checkbox-input">
         Enable orbit controls
       </label>
     </div>

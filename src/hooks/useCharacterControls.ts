@@ -44,8 +44,11 @@ export const useCharacterControls = (
   const moveBackward = useRef(false)
   const moveLeft = useRef(false)
   const moveRight = useRef(false)
-  const setControls = useStore((state) => state.setControls)
   const dist = useRef(0)
+  const setControls = useStore((state) => state.setControls)
+  const isOrbitControlsEnabled = useStore(
+    (state) => state.isOrbitControlsEnabled
+  )
 
   const camGroup = useMemo(() => new Group(), [])
 
@@ -147,7 +150,7 @@ export const useCharacterControls = (
   useEffect(() => {
     camGroup.position.copy(camera.position)
     trackObject.position.set(0, 0, 0)
-    if (characterRef.current) {
+    if (characterRef.current && !isOrbitControlsEnabled) {
       characterOffset
         .copy(camera.position)
         .sub(characterRef.current.position)
@@ -157,23 +160,24 @@ export const useCharacterControls = (
       trackObject.translateY(
         -camera.position.y + characterRef.current.position.y
       )
-
       characterRef.current.position.copy(trackObject.getWorldPosition(trackPos))
 
-      dist.current = camera.position
-        .clone()
-        .sub(characterRef.current.position)
-        .projectOnPlane(axisY)
-        .length()
+      // dist.current = camera.position
+      //   .clone()
+      //   .sub(characterRef.current.position)
+      //   .projectOnPlane(axisY)
+      //   .length()
     }
+  }, [characterRef, camera, trackObject, camGroup, isOrbitControlsEnabled])
 
+  useEffect(() => {
     document.addEventListener("keydown", onKeyDown)
     document.addEventListener("keyup", onKeyUp)
     return () => {
       document.removeEventListener("keydown", onKeyDown)
       document.removeEventListener("keyup", onKeyUp)
     }
-  }, [onKeyDown, onKeyUp, characterRef, camera, trackObject, camGroup])
+  }, [onKeyDown, onKeyUp])
 
   const updateCharacterControls = useCallback(
     (delta: number) => {
