@@ -29,7 +29,6 @@ const cameraQuaternion = new Quaternion()
 const lookTarget = new Vector3()
 const sideDir = new Vector3()
 const frontOffset = new Vector3()
-const sideOffset = new Vector3()
 const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
@@ -192,33 +191,28 @@ export const useCharacterControls = (
       if (controlsRef.current?.enabled) camera.rotation.set(0, 0, 0)
       characterRef.current.rotation.set(0, 0, 0)
 
+      // const ifIntersect = checkForCollisions(
+      //   characterBox,
+      //   objectsToTestForCollisions,
+      //   frontOffset
+      // )
       if (moveForward.current) {
         dummyObject.translateOnAxis(cameraDir, speed)
-        frontOffset.copy(
-          dummyObject.position.sub(characterRef.current.position)
-        )
-        // const ifIntersect = checkForCollisions(
-        //   characterBox,
-        //   objectsToTestForCollisions,
-        //   frontOffset
-        // )
-
-        // characterRef.current.translateOnAxis(cameraDir, speed)
-        // camera.translateOnAxis(cameraDir, speed)
-
-        characterRef.current.position.add(frontOffset)
-        camera.position.add(frontOffset)
         lookTarget.add(cameraDir)
       }
       if (moveBackward.current) {
-        characterRef.current.translateOnAxis(cameraDir, -speed)
-        camera.translateOnAxis(cameraDir, -speed)
+        dummyObject.translateOnAxis(cameraDir, -speed)
         lookTarget.sub(cameraDir)
+      }
+      if (moveForward.current || moveBackward.current) {
+        frontOffset.copy(
+          dummyObject.position.sub(characterRef.current.position)
+        )
+        characterRef.current.position.add(frontOffset)
+        camera.position.add(frontOffset)
       }
       if (moveLeft.current) {
         sideDir.copy(cameraDir).applyEuler(rotationToSide)
-        // characterRotation.set(0, -Math.PI / 2, 0)
-        // characterRef.current.translateX(-speed)
 
         if (controlsRef.current?.enabled) {
           characterRef.current.translateOnAxis(sideDir, speed)
@@ -233,6 +227,7 @@ export const useCharacterControls = (
       }
       if (moveRight.current) {
         sideDir.copy(cameraDir).applyEuler(rotationToSide)
+
         if (controlsRef.current?.enabled) {
           characterRef.current.translateOnAxis(sideDir, -speed)
           camera.translateOnAxis(sideDir, -speed)

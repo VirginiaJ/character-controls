@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 
 import { useAnimations, useGLTF, OrbitControls } from "@react-three/drei"
 import { useFrame, useThree } from "@react-three/fiber"
-import { Group, Mesh, MeshStandardMaterial } from "three"
+import { Group, MeshStandardMaterial } from "three"
 import { GLTF, OrbitControls as OrbitControlsType } from "three-stdlib"
 import { shallow } from "zustand/shallow"
 
@@ -19,7 +19,6 @@ let previousTime = 0
 export const Character = () => {
   const { camera } = useThree()
   const characterRef = useRef<Group>(null)
-  const testObjRef = useRef<Mesh>(null)
   const controlsRef = useRef<OrbitControlsType>(null)
   const controls = useStore((state) => state.controls, shallow)
   const { nodes, materials, animations } = useGLTF(
@@ -84,15 +83,6 @@ export const Character = () => {
           />
         </group>
       </group>
-
-      <mesh
-        ref={testObjRef}
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[1.5, 0.5, 12]}
-      >
-        <ringGeometry args={[4.8, 5, 32]} />
-        <meshBasicMaterial color="red" />
-      </mesh>
 
       <OrbitControls
         ref={controlsRef}
