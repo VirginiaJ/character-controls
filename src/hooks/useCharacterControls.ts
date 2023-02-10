@@ -22,6 +22,8 @@ type ControlKeys =
   | "ArrowRight"
   | "KeyD"
 
+let alpha = 0
+const movementSpeed = 1
 const axisY = new Vector3(0, 1, 0)
 const cameraDir = new Vector3()
 const rotationToSide = new Euler(0, Math.PI / 2, 0)
@@ -33,11 +35,12 @@ const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
 const dummyObject = new Object3D()
-const movementSpeed = 1
+const obj = new Object3D()
 
 export const useCharacterControls = (
   characterRef: MutableRefObject<Group | null>,
-  controlsRef: MutableRefObject<OrbitControlsType | null>
+  controlsRef: MutableRefObject<OrbitControlsType | null>,
+  testObj: any
 ) => {
   const { camera, scene } = useThree()
   const moveForward = useRef(false)
@@ -191,8 +194,9 @@ export const useCharacterControls = (
 
       characterBox.setFromObject(characterRef.current)
       dummyObject.position.copy(characterRef.current.position)
+      obj.position.copy(characterRef.current.position)
 
-      lookTarget.copy(characterRef.current.position)
+      lookTarget.copy(obj.position)
 
       if (controlsRef.current?.enabled) camera.rotation.set(0, 0, 0)
       characterRef.current.rotation.set(0, 0, 0)
@@ -202,48 +206,36 @@ export const useCharacterControls = (
       //   objectsToTestForCollisions,
       //   frontOffset
       // )
-      if (moveForward.current) {
-        dummyObject.translateOnAxis(cameraDir, speed)
-        lookTarget.add(cameraDir)
-      }
-      if (moveBackward.current) {
-        dummyObject.translateOnAxis(cameraDir, -speed)
-        lookTarget.sub(cameraDir)
-      }
       if (moveForward.current || moveBackward.current) {
+        dummyObject.translateOnAxis(
+          cameraDir,
+          moveForward.current ? speed : -speed
+        )
         frontOffset.copy(
           dummyObject.position.sub(characterRef.current.position)
         )
         characterRef.current.position.add(frontOffset)
         camera.position.add(frontOffset)
+        moveForward.current
+          ? lookTarget.add(cameraDir)
+          : lookTarget.sub(cameraDir)
       }
-      if (moveLeft.current) {
+      if (moveLeft.current || moveRight.current) {
         sideDir.copy(cameraDir).applyEuler(rotationToSide)
 
         if (controlsRef.current?.enabled) {
-          characterRef.current.translateOnAxis(sideDir, speed)
-          camera.translateOnAxis(sideDir, speed)
+          characterRef.current.translateOnAxis(
+            sideDir,
+            moveLeft.current ? speed : -speed
+          )
+          camera.translateOnAxis(sideDir, moveLeft.current ? speed : -speed)
         } else {
-          camGroup.rotateY(0.01)
+          camGroup.rotateY(moveLeft.current ? 0.01 : -0.01)
           characterRef.current.position.copy(
             trackObject.getWorldPosition(trackPos)
           )
         }
-        lookTarget.add(sideDir)
-      }
-      if (moveRight.current) {
-        sideDir.copy(cameraDir).applyEuler(rotationToSide)
-
-        if (controlsRef.current?.enabled) {
-          characterRef.current.translateOnAxis(sideDir, -speed)
-          camera.translateOnAxis(sideDir, -speed)
-        } else {
-          camGroup.rotateY(-0.01)
-          characterRef.current.position.copy(
-            trackObject.getWorldPosition(trackPos)
-          )
-        }
-        lookTarget.sub(sideDir)
+        moveLeft.current ? lookTarget.add(sideDir) : lookTarget.sub(sideDir)
       }
 
       if (controlsRef.current?.enabled) {
@@ -252,9 +244,22 @@ export const useCharacterControls = (
       } else {
         camera.lookAt(characterRef.current.position)
       }
-      characterRef.current.lookAt(lookTarget)
+      // dummyObject.position.copy(characterRef.current.position)
+      testObj.current?.position.copy(lookTarget)
+
+      obj.lookAt(lookTarget)
+
+      if (!characterRef.current.quaternion.equals(obj.quaternion)) {
+        alpha += delta
+        characterRef.current.quaternion.rotateTowards(obj.quaternion, alpha)
+        console.log(alpha)
+        if (alpha > 1) alpha = 0
+      }
+
+      // characterRef.current.quaternion.slerp(obj.quaternion, 1)
+      // characterRef.current.lookAt(lookTarget)
     },
-    [characterRef, camera, controlsRef, camGroup, trackObject]
+    [characterRef, camera, camGroup, controlsRef, testObj, trackObject]
   )
 
   return { updateCharacterControls }
