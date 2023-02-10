@@ -21,13 +21,17 @@ body {
 .UI_elements_container {
   position: absolute;
   pointer-events: none;
-  bottom: 0;
+  top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 10;
 }
 
 .checkbox {
   pointer-events: all;
+  position: absolute;
+  bottom: 0;
   display: flex;
   cursor: pointer;
   background-color: rgba(255, 255, 255, 0.3);
@@ -39,4 +43,16 @@ body {
 
 .checkbox-label {
   margin-left: 10px;
+}
+
+.info-box {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.3);
+  margin: 10px;
+  border-radius: 5px;
+  padding: 4px 8px;
+  text-align: center;
 }

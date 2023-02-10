@@ -8,6 +8,7 @@ import { Forest } from "./components/Forest"
 import { Ground } from "./components/Ground"
 import { Ruins } from "./components/Ruins"
 import { Checkbox } from "./components/UI/Checkbox"
+import { InfoBox } from "./components/UI/InfoBox"
 import { Wizard } from "./components/Wizard"
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
         />
       </Canvas>
       <div className="UI_elements_container">
+        <InfoBox />
         <Checkbox />
       </div>
     </div>
