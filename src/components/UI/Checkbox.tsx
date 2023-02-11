@@ -1,24 +1,33 @@
-import { useStore } from "../../store"
+import { useState } from "react"
 
-export const Checkbox = () => {
-  const isOrbitControlsEnabled = useStore(
-    (state) => state.isOrbitControlsEnabled
-  )
-  const setIsOrbitControlsEnabled = useStore(
-    (state) => state.setIsOrbitControlsEnabled
-  )
+interface CheckboxProps {
+  id: string
+  label: string
+  initialValue: boolean
+  onChange: () => void
+}
 
+export const Checkbox = ({
+  id,
+  label,
+  initialValue,
+  onChange,
+}: CheckboxProps) => {
+  const [checked, setChecked] = useState(initialValue)
   return (
     <div className="checkbox">
       <input
-        id="checkbox-input"
+        id={id}
         type="checkbox"
         role="switch"
-        checked={isOrbitControlsEnabled}
-        onChange={() => setIsOrbitControlsEnabled(!isOrbitControlsEnabled)}
+        checked={checked}
+        onChange={() => {
+          setChecked(!checked)
+          onChange()
+        }}
       />
-      <label className="checkbox-label" htmlFor="checkbox-input">
-        Enable orbit controls
+      <label className="checkbox-label" htmlFor={id}>
+        {label}
       </label>
     </div>
   )

@@ -7,7 +7,6 @@ import {
   Vector3,
   Vector3Tuple,
 } from "three"
-import { OBB } from "three-stdlib"
 
 const dist = 4.5
 const characterPosition = new Vector3()
@@ -15,11 +14,15 @@ const groundPlane = new Vector3(0, 1, 0)
 const projectedCameraPosition = new Vector3()
 const cameraDir = new Vector3()
 
-let sceneOBBs: OBB[] = []
-export const getSceneOBBs = () => sceneOBBs
-export const resetSceneOBBs = () => (sceneOBBs = [])
-export const addSceneOBB = (obb: OBB) => {
-  sceneOBBs.push(obb)
+const sceneBBoxes: Box3[] = []
+const boxHelpers: Box3Helper[] = []
+export const getSceneBBoxes = () => sceneBBoxes
+export const addSceneBBox = (bbox: Box3) => {
+  sceneBBoxes.push(bbox)
+}
+export const getBoxHelpers = () => boxHelpers
+export const addBoxHelper = (boxHelper: Box3Helper) => {
+  boxHelpers.push(boxHelper)
 }
 
 // putting character in fron of camera
@@ -34,18 +37,18 @@ export const getCharacterPosition = (camera: Camera): Vector3Tuple => {
 
 export const checkForCollisions = (characterBox: Box3, offset: Vector3) => {
   let ifIntersect = false
-  const sceneOBBs = getSceneOBBs()
+  const sceneBBoxes = getSceneBBoxes()
   characterBox.translate(offset)
 
-  sceneOBBs.forEach((obb: OBB) => {
-    if (obb.intersectsBox3(characterBox)) {
+  sceneBBoxes.forEach((bbox: Box3) => {
+    if (bbox.intersectsBox(characterBox)) {
       ifIntersect = true
     }
   })
   return ifIntersect
 }
 
-export const generateSceneOBBs = (scene: Scene) => {
+export const generateSceneBBoxes = (scene: Scene) => {
   const relevantObjects = scene.children.filter(
     (child: any) =>
       !child.isLight &&
@@ -57,16 +60,18 @@ export const generateSceneOBBs = (scene: Scene) => {
     if (object.children.length > 0) {
       object.traverse((childObj: any) => {
         if (childObj.isMesh && childObj.children.length === 0) {
-          const obb = new OBB().fromBox3(new Box3().setFromObject(childObj))
-          addSceneOBB(obb)
+          const bbox = new Box3().setFromObject(childObj)
+          addSceneBBox(bbox)
           const helper = new Box3Helper(
             new Box3().setFromObject(childObj),
             new Color(0xffff00)
           )
+          addBoxHelper(helper)
+          helper.visible = false
           scene.add(helper)
         }
       })
     }
   })
-  return getSceneOBBs()
+  return getSceneBBoxes()
 }

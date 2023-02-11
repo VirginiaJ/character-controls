@@ -10,8 +10,19 @@ import { Ruins } from "./components/Ruins"
 import { Checkbox } from "./components/UI/Checkbox"
 import { InfoBox } from "./components/UI/InfoBox"
 import { Wizard } from "./components/Wizard"
+import { useStore } from "./store"
 
 function App() {
+  const ifShowCollisionBoxes = useStore((state) => state.ifShowCollisionBoxes)
+  const isOrbitControlsEnabled = useStore(
+    (state) => state.isOrbitControlsEnabled
+  )
+  const setIsOrbitControlsEnabled = useStore(
+    (state) => state.setIsOrbitControlsEnabled
+  )
+  const setIfShowCollisionBoxes = useStore(
+    (state) => state.setIfShowCollisionBoxes
+  )
   return (
     <div className="App" id="container">
       <Canvas
@@ -44,7 +55,20 @@ function App() {
       </Canvas>
       <div className="UI_elements_container">
         <InfoBox />
-        <Checkbox />
+        <div className="checkboxes_container">
+          <Checkbox
+            id="controls-checkbox"
+            initialValue={isOrbitControlsEnabled}
+            label="Enable orbit controls"
+            onChange={() => setIsOrbitControlsEnabled(!isOrbitControlsEnabled)}
+          />
+          <Checkbox
+            id="boxes-checkbox"
+            initialValue={ifShowCollisionBoxes}
+            label="Show collision boxes"
+            onChange={() => setIfShowCollisionBoxes(!ifShowCollisionBoxes)}
+          />
+        </div>
       </div>
     </div>
   )

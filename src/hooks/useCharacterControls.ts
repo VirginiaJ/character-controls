@@ -13,8 +13,9 @@ import { OrbitControls as OrbitControlsType } from "three-stdlib"
 import { useStore } from "../store"
 import {
   checkForCollisions,
-  generateSceneOBBs,
-  getSceneOBBs,
+  generateSceneBBoxes,
+  getBoxHelpers,
+  getSceneBBoxes,
 } from "../utils/helpers"
 
 type ControlKeys =
@@ -50,10 +51,11 @@ export const useCharacterControls = (
   const moveBackward = useRef(false)
   const moveLeft = useRef(false)
   const moveRight = useRef(false)
-  const setControls = useStore((state) => state.setControls)
   const isOrbitControlsEnabled = useStore(
     (state) => state.isOrbitControlsEnabled
   )
+  const ifShowCollisionBoxes = useStore((state) => state.ifShowCollisionBoxes)
+  const setControls = useStore((state) => state.setControls)
 
   const camGroup = useMemo(() => new Group(), [])
   const trackObject = useMemo(() => {
@@ -140,14 +142,21 @@ export const useCharacterControls = (
   )
 
   useEffect(() => {
+    if (getBoxHelpers().length > 0)
+      getBoxHelpers().forEach(
+        (boxHelper) => (boxHelper.visible = ifShowCollisionBoxes)
+      )
+  }, [ifShowCollisionBoxes])
+
+  useEffect(() => {
     characterRef.current && characterBox.setFromObject(characterRef.current)
   }, [characterRef])
 
   useEffect(() => {
-    getSceneOBBs().length === 0 &&
+    getSceneBBoxes().length === 0 &&
       // wrapping in setTimeOut for transformations to be applied when generating
       setTimeout(() => {
-        generateSceneOBBs(scene)
+        generateSceneBBoxes(scene)
       }, 1000)
   }, [scene])
 
