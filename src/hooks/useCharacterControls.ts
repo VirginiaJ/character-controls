@@ -11,6 +11,11 @@ import { Box3, Euler, Group, Object3D, Quaternion, Vector3 } from "three"
 import { OrbitControls as OrbitControlsType } from "three-stdlib"
 
 import { useStore } from "../store"
+import {
+  checkForCollisions,
+  generateSceneOBBs,
+  getSceneOBBs,
+} from "../utils/helpers"
 
 type ControlKeys =
   | "ArrowUp"
@@ -29,6 +34,7 @@ const cameraQuaternion = new Quaternion()
 const lookTarget = new Vector3()
 const sideDir = new Vector3()
 const frontOffset = new Vector3()
+const sideOffset = new Vector3()
 const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
@@ -44,31 +50,17 @@ export const useCharacterControls = (
   const moveBackward = useRef(false)
   const moveLeft = useRef(false)
   const moveRight = useRef(false)
-  const dist = useRef(0)
   const setControls = useStore((state) => state.setControls)
   const isOrbitControlsEnabled = useStore(
     (state) => state.isOrbitControlsEnabled
   )
 
   const camGroup = useMemo(() => new Group(), [])
-
   const trackObject = useMemo(() => {
     const object = new Object3D()
     camGroup.add(object)
     return object
   }, [camGroup])
-
-  const objectsToTestForCollisions = useMemo(
-    () =>
-      scene.children.filter(
-        (child: any) =>
-          !child.isLight &&
-          !child.isPoints &&
-          child.name !== "character" &&
-          child.name !== "ground"
-      ),
-    [scene]
-  )
 
   const keyMap: Record<ControlKeys, (state: boolean) => void> = useMemo(
     () => ({
@@ -148,6 +140,18 @@ export const useCharacterControls = (
   )
 
   useEffect(() => {
+    characterRef.current && characterBox.setFromObject(characterRef.current)
+  }, [characterRef])
+
+  useEffect(() => {
+    getSceneOBBs().length === 0 &&
+      // wrapping in setTimeOut for transformations to be applied when generating
+      setTimeout(() => {
+        generateSceneOBBs(scene)
+      }, 1000)
+  }, [scene])
+
+  useEffect(() => {
     camGroup.position.copy(camera.position)
     trackObject.position.set(0, 0, 0)
     if (characterRef.current && !isOrbitControlsEnabled) {
@@ -161,12 +165,6 @@ export const useCharacterControls = (
         -camera.position.y + characterRef.current.position.y
       )
       characterRef.current.position.copy(trackObject.getWorldPosition(trackPos))
-
-      // dist.current = camera.position
-      //   .clone()
-      //   .sub(characterRef.current.position)
-      //   .projectOnPlane(axisY)
-      //   .length()
     }
   }, [characterRef, camera, trackObject, camGroup, isOrbitControlsEnabled])
 
@@ -188,8 +186,8 @@ export const useCharacterControls = (
       cameraQuaternion.copy(camera.quaternion)
       cameraDir.projectOnPlane(axisY)
       camGroup.position.copy(camera.position)
-
       characterBox.setFromObject(characterRef.current)
+
       dummyObject.position.copy(characterRef.current.position)
 
       lookTarget.copy(characterRef.current.position)
@@ -197,53 +195,54 @@ export const useCharacterControls = (
       if (controlsRef.current?.enabled) camera.rotation.set(0, 0, 0)
       characterRef.current.rotation.set(0, 0, 0)
 
-      // const ifIntersect = checkForCollisions(
-      //   characterBox,
-      //   objectsToTestForCollisions,
-      //   frontOffset
-      // )
-      if (moveForward.current) {
-        dummyObject.translateOnAxis(cameraDir, speed)
-        lookTarget.add(cameraDir)
-      }
-      if (moveBackward.current) {
-        dummyObject.translateOnAxis(cameraDir, -speed)
-        lookTarget.sub(cameraDir)
-      }
       if (moveForward.current || moveBackward.current) {
-        frontOffset.copy(
-          dummyObject.position.sub(characterRef.current.position)
+        dummyObject.translateOnAxis(
+          cameraDir,
+          moveForward.current ? speed : -speed
         )
-        characterRef.current.position.add(frontOffset)
-        camera.position.add(frontOffset)
+        frontOffset
+          .copy(dummyObject.position)
+          .sub(characterRef.current.position)
+
+        const ifIntersect = checkForCollisions(characterBox, frontOffset)
+        if (!ifIntersect) {
+          characterRef.current.position.add(frontOffset)
+          camera.position.add(frontOffset)
+        }
+
+        moveForward.current
+          ? lookTarget.add(cameraDir)
+          : lookTarget.sub(cameraDir)
       }
-      if (moveLeft.current) {
+      if (moveLeft.current || moveRight.current) {
         sideDir.copy(cameraDir).applyEuler(rotationToSide)
 
         if (controlsRef.current?.enabled) {
-          characterRef.current.translateOnAxis(sideDir, speed)
-          camera.translateOnAxis(sideDir, speed)
-        } else {
-          camGroup.rotateY(0.01)
-          characterRef.current.position.copy(
-            trackObject.getWorldPosition(trackPos)
+          dummyObject.translateOnAxis(
+            sideDir,
+            moveLeft.current ? speed : -speed
           )
-        }
-        lookTarget.add(sideDir)
-      }
-      if (moveRight.current) {
-        sideDir.copy(cameraDir).applyEuler(rotationToSide)
+          sideOffset
+            .copy(dummyObject.position)
+            .sub(characterRef.current.position)
 
-        if (controlsRef.current?.enabled) {
-          characterRef.current.translateOnAxis(sideDir, -speed)
-          camera.translateOnAxis(sideDir, -speed)
+          const ifIntersect = checkForCollisions(characterBox, sideOffset)
+          if (!ifIntersect) {
+            characterRef.current.position.add(sideOffset)
+            camera.position.add(sideOffset)
+          }
         } else {
-          camGroup.rotateY(-0.01)
-          characterRef.current.position.copy(
-            trackObject.getWorldPosition(trackPos)
-          )
+          camGroup.rotateY(moveLeft.current ? 0.005 : -0.005)
+          sideOffset
+            .copy(trackObject.getWorldPosition(trackPos))
+            .sub(characterRef.current.position)
+          const ifIntersect = checkForCollisions(characterBox, sideOffset)
+          if (!ifIntersect) {
+            characterRef.current.position.add(sideOffset)
+          }
         }
-        lookTarget.sub(sideDir)
+
+        moveLeft.current ? lookTarget.add(sideDir) : lookTarget.sub(sideDir)
       }
 
       if (controlsRef.current?.enabled) {
@@ -254,7 +253,7 @@ export const useCharacterControls = (
       }
       characterRef.current.lookAt(lookTarget)
     },
-    [characterRef, camera, controlsRef, camGroup, trackObject]
+    [characterRef, camera, camGroup, controlsRef, trackObject]
   )
 
   return { updateCharacterControls }
