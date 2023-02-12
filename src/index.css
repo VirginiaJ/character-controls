@@ -28,15 +28,21 @@ body {
   z-index: 10;
 }
 
-.checkbox {
-  pointer-events: all;
+.checkboxes_container {
   position: absolute;
   bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.checkbox {
+  pointer-events: all;
   display: flex;
   cursor: pointer;
   background-color: rgba(255, 255, 255, 0.3);
   width: fit-content;
-  margin: 10px;
+  margin-left: 10px;
+  margin-bottom: 10px;
   border-radius: 5px;
   padding: 4px 8px 4px 2px;
 }
