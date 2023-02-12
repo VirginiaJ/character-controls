@@ -42,6 +42,7 @@ const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
 const dummyObject = new Object3D()
+const camGroupRotation = new Euler(0, 0, 0)
 
 export const useCharacterControls = (
   characterRef: MutableRefObject<Group | null>,
@@ -196,6 +197,7 @@ export const useCharacterControls = (
       cameraQuaternion.copy(camera.quaternion)
       cameraDir.projectOnPlane(axisY)
       camGroup.position.copy(camera.position)
+      camGroup.rotation.copy(camGroupRotation)
       characterBox.setFromObject(characterRef.current)
 
       dummyObject.position.copy(characterRef.current.position)
@@ -249,6 +251,7 @@ export const useCharacterControls = (
             .sub(characterRef.current.position)
           const ifIntersect = checkForCollisions(characterBox, sideOffset)
           if (!ifIntersect) {
+            camGroupRotation.copy(camGroup.rotation)
             characterRef.current.position.add(sideOffset)
           }
         }
