@@ -42,7 +42,6 @@ const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
 const dummyObject = new Object3D()
-const lookObject = new Object3D()
 
 export const useCharacterControls = (
   characterRef: MutableRefObject<Group | null>,
