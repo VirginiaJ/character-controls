@@ -28,12 +28,12 @@ type ControlKeys =
   | "ArrowRight"
   | "KeyD"
 
-let alpha = 0
 const movementSpeed = 1
 const axisY = new Vector3(0, 1, 0)
 const cameraDir = new Vector3()
 const rotationToSide = new Euler(0, Math.PI / 2, 0)
 const cameraQuaternion = new Quaternion()
+const characterQuaternion = new Quaternion()
 const lookTarget = new Vector3()
 const sideDir = new Vector3()
 const frontOffset = new Vector3()
@@ -42,12 +42,11 @@ const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
 const dummyObject = new Object3D()
-const obj = new Object3D()
+const lookObject = new Object3D()
 
 export const useCharacterControls = (
   characterRef: MutableRefObject<Group | null>,
-  controlsRef: MutableRefObject<OrbitControlsType | null>,
-  testObj: any
+  controlsRef: MutableRefObject<OrbitControlsType | null>
 ) => {
   const { camera, scene } = useThree()
   const moveForward = useRef(false)
@@ -201,12 +200,12 @@ export const useCharacterControls = (
       characterBox.setFromObject(characterRef.current)
 
       dummyObject.position.copy(characterRef.current.position)
-      obj.position.copy(characterRef.current.position)
-
-      lookTarget.copy(obj.position)
+      lookTarget.copy(dummyObject.position)
 
       if (controlsRef.current?.enabled) camera.rotation.set(0, 0, 0)
+      characterQuaternion.copy(characterRef.current.quaternion)
       characterRef.current.rotation.set(0, 0, 0)
+      dummyObject.rotation.set(0, 0, 0)
 
       if (moveForward.current || moveBackward.current) {
         dummyObject.translateOnAxis(
@@ -263,22 +262,24 @@ export const useCharacterControls = (
       } else {
         camera.lookAt(characterRef.current.position)
       }
-      // dummyObject.position.copy(characterRef.current.position)
-      testObj.current?.position.copy(lookTarget)
+      characterRef.current.quaternion.copy(characterQuaternion)
 
-      obj.lookAt(lookTarget)
-
-      if (!characterRef.current.quaternion.equals(obj.quaternion)) {
-        alpha += delta
-        characterRef.current.quaternion.rotateTowards(obj.quaternion, alpha)
-        // console.log(alpha)
-        if (alpha > 1) alpha = 0
+      if (
+        moveForward.current ||
+        moveBackward.current ||
+        moveLeft.current ||
+        moveRight.current
+      ) {
+        dummyObject.lookAt(lookTarget)
+        if (!characterRef.current.quaternion.equals(dummyObject.quaternion)) {
+          characterRef.current.quaternion.rotateTowards(
+            dummyObject.quaternion,
+            0.03
+          )
+        }
       }
-
-      // characterRef.current.quaternion.slerp(obj.quaternion, 1)
-      // characterRef.current.lookAt(lookTarget)
     },
-    [characterRef, camera, camGroup, controlsRef, testObj, trackObject]
+    [characterRef, camera, camGroup, controlsRef, trackObject]
   )
 
   return { updateCharacterControls }
