@@ -28,10 +28,12 @@ type ControlKeys =
   | "ArrowRight"
   | "KeyD"
 
+const movementSpeed = 1
 const axisY = new Vector3(0, 1, 0)
 const cameraDir = new Vector3()
 const rotationToSide = new Euler(0, Math.PI / 2, 0)
 const cameraQuaternion = new Quaternion()
+const characterQuaternion = new Quaternion()
 const lookTarget = new Vector3()
 const sideDir = new Vector3()
 const frontOffset = new Vector3()
@@ -40,7 +42,7 @@ const characterOffset = new Vector3()
 const trackPos = new Vector3()
 const characterBox = new Box3()
 const dummyObject = new Object3D()
-const movementSpeed = 1
+const camGroupRotation = new Euler(0, 0, 0)
 
 export const useCharacterControls = (
   characterRef: MutableRefObject<Group | null>,
@@ -195,14 +197,16 @@ export const useCharacterControls = (
       cameraQuaternion.copy(camera.quaternion)
       cameraDir.projectOnPlane(axisY)
       camGroup.position.copy(camera.position)
+      camGroup.rotation.copy(camGroupRotation)
       characterBox.setFromObject(characterRef.current)
 
       dummyObject.position.copy(characterRef.current.position)
-
-      lookTarget.copy(characterRef.current.position)
+      lookTarget.copy(dummyObject.position)
 
       if (controlsRef.current?.enabled) camera.rotation.set(0, 0, 0)
+      characterQuaternion.copy(characterRef.current.quaternion)
       characterRef.current.rotation.set(0, 0, 0)
+      dummyObject.rotation.set(0, 0, 0)
 
       if (moveForward.current || moveBackward.current) {
         dummyObject.translateOnAxis(
@@ -247,10 +251,10 @@ export const useCharacterControls = (
             .sub(characterRef.current.position)
           const ifIntersect = checkForCollisions(characterBox, sideOffset)
           if (!ifIntersect) {
+            camGroupRotation.copy(camGroup.rotation)
             characterRef.current.position.add(sideOffset)
           }
         }
-
         moveLeft.current ? lookTarget.add(sideDir) : lookTarget.sub(sideDir)
       }
 
@@ -260,7 +264,22 @@ export const useCharacterControls = (
       } else {
         camera.lookAt(characterRef.current.position)
       }
-      characterRef.current.lookAt(lookTarget)
+      characterRef.current.quaternion.copy(characterQuaternion)
+
+      if (
+        moveForward.current ||
+        moveBackward.current ||
+        moveLeft.current ||
+        moveRight.current
+      ) {
+        dummyObject.lookAt(lookTarget)
+        if (!characterRef.current.quaternion.equals(dummyObject.quaternion)) {
+          characterRef.current.quaternion.rotateTowards(
+            dummyObject.quaternion,
+            0.03
+          )
+        }
+      }
     },
     [characterRef, camera, camGroup, controlsRef, trackObject]
   )
